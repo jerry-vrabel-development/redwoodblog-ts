@@ -1,19 +1,95 @@
-import { Link, routes } from '@redwoodjs/router'
-import { MetaTags } from '@redwoodjs/web'
+import { MetaTags, useMutation } from '@redwoodjs/web'
+import { toast, Toaster } from '@redwoodjs/web/toast'
+import {
+  FieldError,
+  Form,
+  FormError,
+  Label,
+  Submit,
+  SubmitHandler,
+  TextField,
+  TextAreaField,
+  useForm,
+} from '@redwoodjs/forms'
+
+import {
+  CreateContactMutation,
+  CreateContactMutationVariables,
+} from 'types/graphql'
+
+const CREATE_CONTACT = gql`
+  mutation CreateContactMutation($input: CreateContactInput!) {
+    createContact(input: $input) {
+      id
+    }
+  }
+`
+
+interface FormValues {
+  name: string
+  email: string
+  message: string
+}
 
 const ContactPage = () => {
+  const formMethods = useForm({mode: 'onBlur'})
+  const [create, { loading, error}] = useMutation<
+  CreateContactMutation,
+  CreateContactMutationVariables
+>(CREATE_CONTACT, {
+  onCompleted: () => {
+    toast.success('Thank you for your submission!')
+    formMethods.reset()
+  },
+})
+
+const onSubmit: SubmitHandler<FormValues> = (data) => {
+  create({ variables: { input: data } })
+}
+
   return (
     <>
       <MetaTags title="Contact" description="Contact page" />
+      <Toaster />
 
-      <h1>ContactPage</h1>
-      <p>
-        Find me in <code>./web/src/pages/ContactPage/ContactPage.tsx</code>
-      </p>
-      <p>
-        My default route is named <code>contact</code>, link to me with `
-        <Link to={routes.contact()}>Contact</Link>`
-      </p>
+      <Form
+        onSubmit={onSubmit}
+        error={error}
+        formMethods={formMethods}
+        >
+      <FormError error={error} wrapperClassName="form-error" />
+
+        <Label name="name" errorClassName='error'>Name</Label>
+        <TextField
+          name="name"
+          validation={{ required: true }}
+          errorClassName="error"
+        />
+        <FieldError name="name" className="error" />
+
+        <Label name="Email" errorClassName='error'>Email</Label>
+        <TextField
+          name="email"
+          validation={{ required: true,
+            pattern: {
+              value: /^[^@]+@[^.]+\..+$/,
+              message: 'Please enter a valid email address',
+            },
+          }}
+          errorClassName='error'
+        />
+        <FieldError name="email" className="error" />
+
+        <Label name="Message" errorClassName='error'>Message</Label>
+        <TextAreaField
+          name="message"
+          validation={{ required: true }}
+          errorClassName='error'
+        />
+        <FieldError name="message" className="error" />
+
+        <Submit disabled={loading}>Save</Submit>
+      </Form>
     </>
   )
 }
