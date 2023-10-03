@@ -1,3 +1,5 @@
+import Article from 'src/components/Article'
+
 import type { FindArticleQuery } from 'types/graphql'
 import type { CellSuccessProps, CellFailureProps } from '@redwoodjs/web'
 
@@ -21,5 +23,5 @@ export const Failure = ({ error }: CellFailureProps) => (
 )
 
 export const Success = ({ article }: CellSuccessProps<FindArticleQuery, FindArticleQueryVariables>) => {
-  return <div>{JSON.stringify(article)}</div>
+  return <Article article={article} />
 }
